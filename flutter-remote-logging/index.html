@@ -1,0 +1,362 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>Building High-Quality Production Flutter App: A Complete Guide to Flutter Remote Logging with GCP Cloud Logging</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14" ga4id=""></google-codelab-analytics>
+  <google-codelab codelab-gaid="G-42QE2GLHVZ"
+                  codelab-ga4id=""
+                  id="flutter-remote-logging"
+                  title="Building High-Quality Production Flutter App: A Complete Guide to Flutter Remote Logging with GCP Cloud Logging"
+                  environment="web"
+                  feedback-link="https://github.com/isaacadariku/flutter-codelabs/issues">
+    
+      <google-codelab-step label="Before You Begin" duration="3">
+        <p>Picture this: Your Flutter app encounters an unexpected behavior in production, and you&#39;re left scrambling to understand the problem buried within lines of code. Frustrating, isn&#39;t it?</p>
+<p>For Backend and Web Developers, sifting through server logs is a common solution. But what about Flutter Developers?</p>
+<p>While the popular <a href="https://firebase.google.com/docs/crashlytics" target="_blank">Firebase Crashlytics</a> or other bug-tracking tools can help offers a solution for app crashes, it has limitations. It only retains the most recent eight exceptions per session, potentially losing valuable insights if your app encounters more exceptions <a href="https://firebase.google.com/docs/crashlytics/customize-crash-reports?platform=ios#:~:text=Note%3A%20Crashlytics%20only%20stores%20the%20most%20recent%20eight%20exceptions%20in%20a%20given%20app%20session.%20If%20your%20app%20throws%20more%20than%20eight%20exceptions%20in%20a%20session%2C%20older%20exceptions%20are%20lost" target="_blank">(source)</a>.</p>
+<p>So, what&#39;s the solution? How do you debug your Flutter app in production without direct access to users&#39; devices?</p>
+<aside class="special"><p> By the end of this codelab, you&#39;ll:</p>
+<ul>
+<li>Understand the significance of Remote Logging.</li>
+<li>Set up Remote Logging in your Flutter app with Cloud Logging.</li>
+<li>Effectively monitor, analyze, alert, and troubleshoot issues in your Flutter app.</li>
+</ul>
+</aside>
+<h2 is-upgraded>What is Remote Logging?</h2>
+<p>Remote logging is a technique to log events from your app to a remote server. Creating possibilities for monitoring, analyzing, alerting, visualizing, understanding user behaviour, identifying bugs, and optimizing app performance in production environments.</p>
+<h2 is-upgraded>Why is Remote Logging Important?</h2>
+<p>As a developer, one of the simplest and most popular debugging techniques is examining application logs. Remote logging extends this capability to production environments, allowing you to address issues that may impact your users. It provides valuable insights for fixing bugs and offers real-time alerts when issues occur, as emphasized by <a href="https://www.linkedin.com/posts/dane-mackier-a0b99670_the-production-flutter-tools-to-create-and-activity-7158458885563973632-ciOz?utm_source=share&utm_medium=member_desktop" target="_blank">Dane Mackier - FilledStacks</a>.</p>
+<h2 is-upgraded>Remote logging available options for Flutter</h2>
+<p>While several solutions exist for remote logging, including <a href="https://pub.dev/packages/sentry_flutter" target="_blank">Sentry</a>, <a href="https://pub.dev/packages/aws_cloudwatch" target="_blank">AWS CloudWatch</a>, <a href="https://pub.dev/packages/logging_appenders" target="_blank">logging_appenders</a> and many more, this codelab focuses on <a href="https://cloud.google.com/logging" target="_blank">Cloud Logging</a>.</p>
+<h3 is-upgraded><strong>Why </strong><a href="https://cloud.google.com/logging" target="_blank"><strong>Cloud Logging</strong></a><strong>?</strong></h3>
+<p>It&#39;s a fully managed service designed for storing, searching, analyzing, visualizing and alerting on log data and events, making it ideal for monitoring and optimizing your Flutter app.</p>
+<p class="image-container"><img alt="image_caption" src="img/73906041bd51e740.gif"></p>
+<aside class="special"><p> Example of remote logs from a Flutter App to Cloud Logging</p>
+</aside>
+<h2 is-upgraded>Setting up Remote Logging in Flutter app with Cloud Logging</h2>
+<aside class="warning"><p><strong>Prerequisites:</strong> To use Cloud Logging, you need a Google Cloud project. If you don&#39;t have one, you can create it in the <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>. Additionally, a <a href="https://firebase.google.com/docs/projects/learn-more#firebase-cloud-relationship" target="_blank">Firebase project</a> simplifies this process as it&#39;s automatically created with a Google Cloud project.</p>
+</aside>
+<h3 is-upgraded>Authentication with Google Cloud Platform</h3>
+<p>This is necessary to write logs to Cloud Logging. There are two options:</p>
+<h3 is-upgraded>Option 1:</h3>
+<p>Using the <a href="https://pub.dev/packages/google_sign_in" target="_blank">google-sign-in</a> plugin in conjunction with the <a href="https://pub.dev/packages/extension_google_sign_in_as_googleapis_auth" target="_blank">extension_google_sign_in_as_googleapis_auth</a> package, this approach is suitable for user authentication and authorization.</p>
+<h3 is-upgraded>Option 2:</h3>
+<p>Using a <a href="https://cloud.google.com/iam/docs/service-account-overview" target="_blank">Service Account</a> for autonomous application authentication. This is the approach we&#39;ll explore in this codelab.</p>
+<p>Click <code>Next</code> let&#39;s get started! 🚀</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Create and Enable Service for Logging" duration="3">
+        <h2 is-upgraded>Create a Service Account</h2>
+<p>Navigate to the <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> and select your project.</p>
+<p class="image-container"><img alt="image_caption" src="img/e0ee1ec31a8efc0b.png"></p>
+<p>In the left-hand navigation, click on the <code>IAM & Admin</code> and then click on <code>Service Accounts</code>.</p>
+<p class="image-container"><img alt="image_caption" src="img/5c95c7af496b1275.png"></p>
+<ol type="1">
+<li>Fill in the service account details and click on <code>CREATE AND CONTINUE</code>.</li>
+</ol>
+<p class="image-container"><img alt="image_caption" src="img/b654da6690b908e1.png"></p>
+<ol type="1" start="2">
+<li>Grant this service account access to the project, click on <code>Select a role</code> and search for <code>logs writer</code> and then click on <code>Logs Writer</code> which gives the service account access to write logs, and click on <code>CONTINUE</code>.</li>
+</ol>
+<p class="image-container"><img alt="image_caption" src="img/b37e9d6b7ebe1f9a.png"></p>
+<ol type="1" start="3">
+<li>We don&#39;t need to grant any users access to this service account, so click on <code>DONE</code>.</li>
+</ol>
+<p class="image-container"><img alt="image_caption" src="img/ae9a88001f058398.png"></p>
+<ol type="1" start="4">
+<li>Create a <code>Key</code> for the service account, click on <code>Keys</code> tab and then <code>ADD KEY</code> and select <code>Create new key</code>. Select <code>JSON</code> and click on <code>CREATE</code>.</li>
+</ol>
+<p class="image-container"><img alt="image_caption" src="img/4a1f2d424378db48.png"></p>
+<p>The JSON key file will be downloaded to your computer. As seen below.</p>
+<p class="image-container"><img alt="image_caption" src="img/50ee0cd48624df66.png"></p>
+<aside class="special"><p> You have successfully created a service account and downloaded the JSON key file. Keep this file safe and secure, as it will be used to authenticate your Flutter app to write logs.</p>
+</aside>
+<h2 is-upgraded>Enable Cloud Logging API</h2>
+<p>Navigate to <a href="https://console.cloud.google.com/apis/api/logging.googleapis.com/" target="_blank"><code>Cloud Logging API</code></a> and then click on <code>ENABLE</code>.</p>
+<p class="image-container"><img alt="image_caption" src="img/6810a47cefd647c9.png"></p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Set up the Flutter app" duration="3">
+        <h2 is-upgraded>Create or Open a Flutter Project</h2>
+<p>Open your Flutter project or create a new Flutter project by running <code>flutter create flutter_remote_logging</code> from a command line.</p>
+<p>We will use the <a href="https://pub.dev/packages/googleapis" target="_blank"><code>googleapis</code></a> and <a href="https://pub.dev/packages/googleapis_auth" target="_blank"><code>googleapis_auth</code></a> packages to authenticate the Flutter app to access Cloud Logging. Also, we will use the <a href="https://pub.dev/packages/logger" target="_blank"><code>logger</code></a> package to log events from our app to Cloud Logging with severity levels. This enables filtering logs based on severity, such as displaying only ERROR-level logs.</p>
+<p>Run the following command from a command line to add the packages to your Flutter app:</p>
+<pre><code language="language-bash" class="language-bash">flutter pub add googleapis googleapis_auth logger
+</code></pre>
+<h2 is-upgraded>Authenticate the Flutter app to Access Cloud Logging</h2>
+<p>Create a new service or a new Dart file called <code>google_cloud_logging_service.dart</code> and add the following code:</p>
+<pre><code language="language-dart" class="language-dart">import &#39;package:flutter/foundation.dart&#39;;
+import &#39;package:googleapis/logging/v2.dart&#39;;
+import &#39;package:googleapis_auth/auth_io.dart&#39;;
+
+// Define constants for authentication and project identification
+const _serviceAccountCredentials = {
+  // Replace with the content of the JSON key file
+  &#34;type&#34;: &#34;service_account&#34;,
+  // ...
+  // ...
+  // ...
+};
+const _projectId = &#39;YOUR_PROJECT_ID&#39;; // Replace with your project ID from the JSON key file
+
+class GoogleCloudLoggingService {
+  late LoggingApi _loggingApi; // Instance variable for Cloud Logging API
+  bool _isSetup = false; // Indicator to check if the API setup is complete
+
+   // Method to set up the Cloud Logging API
+  Future&lt;void&gt; setupLoggingApi() async {
+    if (_isSetup) return;
+
+    try {
+      // Create credentials using ServiceAccountCredentials
+      final credentials = ServiceAccountCredentials.fromJson(
+        _serviceAccountCredentials,
+      );
+
+      // Authenticate using ServiceAccountCredentials and obtain an AutoRefreshingAuthClient authorized client
+      final authClient = await clientViaServiceAccount(
+        credentials,
+        [LoggingApi.loggingWriteScope],
+      );
+
+      // Initialize the Logging API with the authorized client
+      _loggingApi = LoggingApi(authClient);
+
+       // Mark the Logging API setup as complete
+      _isSetup = true;
+      debugPrint(&#39;Cloud Logging API setup for $_projectId&#39;);
+    } catch (error) {
+      debugPrint(&#39;Error setting up Cloud Logging API $error&#39;);
+    }
+  }
+}
+</code></pre>
+<p>Let&#39;s quickly understand the code above:</p>
+<ul>
+<li>We created a <code>GoogleCloudLoggingService</code> class that will be responsible for setting up the Cloud Logging API and writing logs to Cloud Logging.</li>
+<li>Using the JSON key file we downloaded, we defined a constant <code>_serviceAccountCredentials</code> to store the content of the JSON key file. We also defined another constant <code>_projectId</code> to store the project ID from the JSON key file.</li>
+</ul>
+<aside class="warning"><p><strong>Important:</strong> Adding the JSON key file content directly to the Dart file is not recommended for security reasons. But since this service account is only used to write logs, it is safe to do so. However, you should follow this <a href="https://cloud.google.com/iam/docs/best-practices-for-managing-service-account-keys" target="_blank">best practice for managing service account keys</a>.</p>
+</aside>
+<ul>
+<li>We are using the <code>late</code> keyword to declare the <code>_loggingApi</code> instance variable because we will initialize it in the <code>setupLoggingApi()</code> method.</li>
+<li>It includes a method <code>setupLoggingApi()</code> to initialize and authenticate the Cloud Logging API.</li>
+<li>The class maintains a flag <code>_isSetup</code> to track whether the API setup is complete or not, which is used to prevent multiple setups of the API with the same instance.</li>
+</ul>
+<p>If everything is set up correctly, your project structure should look similar to this:</p>
+<pre><code language="language-PlainText" class="language-PlainText">flutter_project
+├── android
+├── ios
+├── lib
+│   ├── google_cloud_logging_service.dart
+│   └── main.dart
+├── test
+├── web
+├── pubspec.yaml
+└── ...
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Set up Log writer" duration="1">
+        <p>Using the <a href="https://pub.dev/packages/logger" target="_blank"><code>Logger</code></a> package we added, let&#39;s update the <code>google_cloud_logging_service.dart</code> file to include the <code>writeLog()</code> method:</p>
+<pre><code language="language-dart" class="language-dart">...
+import &#39;package:logger/logger.dart&#39;;
+
+...
+...
+...
+
+class GoogleCloudLoggingService {
+  ...
+  ...
+  ...
+
+  void writeLog({required Level level, required String message}) {
+    if (!_isSetup) {
+      // If Logging API is not setup, return
+      debugPrint(&#39;Cloud Logging API is not setup&#39;);
+      return;
+    }
+
+    // Define environment and log name
+    const env = &#39;dev&#39;;
+    const logName = &#39;projects/$_projectId/logs/$env&#39;; // It should in the format projects/[PROJECT_ID]/logs/[LOG_ID]
+
+    // Create a monitored resource
+    final resource = MonitoredResource()..type = &#39;global&#39;; // A global resource type is used for logs that are not associated with a specific resource
+
+    // Map log levels to severity levels
+    final severityFromLevel = switch (level) {
+      Level.fatal =&gt; &#39;CRITICAL&#39;,
+      Level.error =&gt; &#39;ERROR&#39;,
+      Level.warning =&gt; &#39;WARNING&#39;,
+      Level.info =&gt; &#39;INFO&#39;,
+      Level.debug =&gt; &#39;DEBUG&#39;,
+      _ =&gt; &#39;NOTICE&#39;,
+    };
+
+    // Create a log entry
+    final logEntry = LogEntry()
+      ..logName = logName
+      ..jsonPayload = {&#39;message&#39;: message}
+      ..resource = resource
+      ..severity = severityFromLevel
+      ..labels = {
+        &#39;project_id&#39;: _projectId, // Must match the project ID with the one in the JSON key file
+        &#39;level&#39;: level.name.toUpperCase(),
+        &#39;environment&#39;: env, // Optional but useful to filter logs by environment
+        &#39;user_id&#39;: &#39;your-app-user-id&#39;, // Useful to filter logs by userID
+        &#39;app_instance_id&#39;: &#39;your-app-instance-id&#39;, // Useful to filter logs by app instance ID e.g device ID + app version (iPhone-12-ProMax-v1.0.0)
+      };
+
+    // Create a write log entries request
+    final request = WriteLogEntriesRequest()..entries = [logEntry];
+
+    // Write the log entry using the Logging API and handle errors
+    _loggingApi.entries.write(request).catchError((error) {
+      debugPrint(&#39;Error writing log entry $error&#39;);
+      return WriteLogEntriesResponse();
+    });
+  }
+}
+</code></pre>
+<p>The method <code>writeLog()</code> is to write log entries to the Cloud Logging. It constructs log entries using the provided <a href="https://pub.dev/documentation/logger/latest/logger/Level.html" target="_blank"><code>Level</code></a> and <a href="https://pub.dev/documentation/logger/latest/logger/OutputEvent/lines.html" target="_blank"><code>message</code></a> from the <code>Logger</code> package.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Set up Logger to Output to Cloud Logging API" duration="1">
+        <p>In the <code>main.dart</code> file, update with the following code:</p>
+<pre><code language="language-dart" class="language-dart">import &#39;package:flutter/foundation.dart&#39;;
+import &#39;package:flutter/material.dart&#39;;
+import &#39;package:flutter_remote_logging/google_cloud_logging_service.dart&#39;;
+import &#39;package:logger/logger.dart&#39;;
+
+final log = Logger();
+final googleCloudLoggingService = GoogleCloudLoggingService();
+
+Future&lt;void&gt; main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Setup Cloud Logging API
+  await googleCloudLoggingService.setupLoggingApi();
+
+  // Use the output listener from the Logger package to write logs to Cloud Logging
+  Logger.addOutputListener((event) {
+    if (kReleaseMode) { // Only write logs to Cloud Logging in release mode
+      googleCloudLoggingService.writeLog(
+        level: event.level,
+        message: event.lines.join(&#39;\n&#39;), // Join the log lines with a new line, so that it is written as a single message
+      );
+      debugPrint(&#39;App will log output to Cloud Logging&#39;);
+    }
+  });
+
+  log.i(&#39;App started&#39;);
+  runApp(const MyApp());
+}
+</code></pre>
+<aside class="warning"><p> 💡 For the sake of this codelab, I won&#39;t be adding any <a href="https://fluttergems.dev/state-management/" target="_blank">dependency injection</a> package like <a href="https://pub.dev/packages/get_it" target="_blank"><code>get_it</code></a> to manage the <code>GoogleCloudLoggingService</code> instance. You can use any DI package you like.</p>
+</aside>
+<p>From the code above, as our app is starting, we call the <code>setupLoggingApi()</code> method from the <code>GoogleCloudLoggingService</code> instance to authenticate our Flutter app to access Cloud Logging. We then use the <a href="https://pub.dev/documentation/logger/latest/logger/Logger/addOutputListener.html" target="_blank">output listener</a> from the Logger package to write logs to Cloud Logging only in <a href="https://api.flutter.dev/flutter/foundation/kReleaseMode-constant.html" target="_blank">release mode</a>, as this is the main mode we want to log, monitor and analyze activities in the Flutter app.</p>
+<aside class="warning"><p><strong>Quick Note:</strong> If you want to test in <a href="https://api.flutter.dev/flutter/foundation/kDebugMode-constant.html" target="_blank">debug mode</a>, change the <code>if (kReleaseMode)</code> condition to <code>if (!kReleaseMode)</code>.</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Write Logs to Cloud Logging" duration="1">
+        <p>🥳 We are all set and ready to write logs to Cloud Logging. You can write logs from anywhere in the Flutter app using the <code>Logger</code> package.</p>
+<aside class="special"><p> In a real-world scenario, you would write logs based on user interactions, network requests, and caught errors.</p>
+</aside>
+<p>For this codelab, I used the counter app to showcase some logs. I added the following logs to the <code>_incrementCounter()</code> method in the <code>main.dart</code> file, such that when you click on the counter button, it logs the following:</p>
+<pre><code language="language-dart" class="language-dart">  void _incrementCounter() {
+    log.i(&#39;User tapped on the button&#39;);
+    log.e(&#39;Error occurred while fetching data&#39;);
+    log.w(&#39;Warning: User is offline&#39;);
+    log.f(&#39;A fatal error occurred&#39; &#39;$_counter&#39;);
+    log.d(&#39;Debug: User data fetched successfully&#39;);
+    log.t(&#39;Verbose: User data fetched successfully&#39;);
+    ...
+    ...
+  }
+</code></pre>
+<p>You can now run the Flutter app and if everything is set up correctly, you should see the logs in your console.</p>
+<p class="image-container"><img alt="image_caption" src="img/410fea0135e1da1f.png"></p>
+<p>Click on the counter button to trigger the logs.</p>
+<p class="image-container"><img alt="image_caption" src="img/fd716741f3ea2921.gif"></p>
+<p>Congratulations! 👏🏾 You have successfully set up remote logging in your Flutter app with Cloud Logging.</p>
+<p class="image-container"><img alt="image_caption" src="img/dddf75a95449008.gif"></p>
+<aside class="special"><p> Source code is available on <a href="https://github.com/isaacadariku/flutter-tutorials/tree/main/flutter_remote_logging" target="_blank">GitHub</a>.</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="View Logs in Cloud Logging" duration="1">
+        <p>You can view logs in Cloud Logging by navigating to the <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> and selecting your project. In the left-hand navigation, click on &#34;Logging&#34; and then &#34;Logs Explorer&#34; or click on the following link <a href="https://console.cloud.google.com/logs/query" target="_blank">Logs Explorer</a>.</p>
+<p class="image-container"><img alt="image_caption" src="img/42e4652355d75b37.png"></p>
+<p>You can filter logs by <code>severity level</code>, <code>log name</code>, <code>resource type</code>, and <code>time range</code>. If at any point a log is not clear, click on the log entry to view the log details and then click on <code>Explain this log entry</code> to get AI-ML-powered insights into the log entry.</p>
+<p class="image-container"><img alt="image_caption" src="img/856142f871ca83c8.png"></p>
+<p>You can also create logs-based <code>metrics</code> and <code>alerts</code> to monitor and alert on logs entries in the Flutter app. For example, you can create a logs-based metric to count the number of logs with a severity level of <code>CRITICAL</code> and then create an alert to notify you when the count exceeds a certain threshold in Slack, Email, or any other notification channel based on your policy.</p>
+<p class="image-container"><img alt="image_caption" src="img/f1b28ec748a63b1d.png"></p>
+<p>Another good use case is to monitor users&#39; behaviour. If you want to know if users are using a feature or not, you can add a log monitoring for that and alert if the usage is low. This is something we cannot achieve with Crashlytics alone, and it is very important to understand user behaviour because it can help us remove unused code. As a developer, less code, little maintenance, fewer bugs, and more quality app 😋.</p>
+<p>For more information, you can refer to the <a href="https://cloud.google.com/logging/docs/" target="_blank">Cloud Logging documentation</a>.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Wrap Up" duration="1">
+        <p>We&#39;ve explored the setup of a game-changing solution for Flutter remote logging using Cloud Logging. You now understand the significance of remote logging, how to set it up in your Flutter app, and how to effectively monitor and analyze issues.</p>
+<p>For clearer and more organized log output, consider leveraging <a href="https://stacked.filledstacks.com/" target="_blank">Stacked Architecture</a>. It provides a more organized and structured way to log events in your Flutter app. You can refer to the <a href="https://pub.dev/documentation/stacked_generator/latest/builder/stackedLoggerGenerator.html" target="_blank">stackedLoggerGenerator</a> in the <a href="https://pub.dev/packages/stacked_generator" target="_blank">stacked_generator</a> package for more information.</p>
+<p>Remote logging is indispensable for any high-quality production Flutter app. Research indicates that successful reliability is significantly associated with observability in systems (<a href="https://cloud.google.com/devops/state-of-devops" target="_blank">source</a>). Remote logging facilitates faster and more accurate issue resolution, ultimately enhancing the quality of Flutter apps.</p>
+<aside class="special"><p> Always remember <strong>&#34;High-quality Flutter apps should be the default&#34;</strong> - <a href="https://www.linkedin.com/in/ericseidel/" target="_blank"><em>Eric Seidel Leading Shorebird, Founded Flutter</em></a></p>
+</aside>
+<h2 is-upgraded>Thank You! 🙌🏾</h2>
+<p>Thank you for completing this codelab! I hope you enjoyed the codelab. 😊 Until next time, Help contribute to this codelab by:</p>
+<ul>
+<li>📢 Spreading it with your friends, family, and colleagues.</li>
+<li>➕ Follow me on <a href="https://medium.com/@isaacadariku" target="_blank">Medium</a> to receive notifications when I release new articles and codelabs.</li>
+<li>😍 Connecting with me on <a href="https://twitter.com/AdarikuIsaac" target="_blank">Twitter</a> and <a href="https://www.linkedin.com/in/isaacadariku/" target="_blank">LinkedIn</a> and I would be delighted to provide assistance with any questions.</li>
+<li>📆 Book a 1:1 session with me! on <a href="https://topmate.io/isaacadariku" target="_blank">TopMate</a></li>
+</ul>
+<aside class="special"><p> Every day is another opportunity to gain Mastery! 💙 - Isaac Adariku (Eternity)</p>
+</aside>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/claat-public/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/prettify.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "environment": "web",
+  "format": "html",
+  "prefix": "https://storage.googleapis.com",
+  "mainga": "UA-49880327-14",
+  "updated": "2024-02-14T04:54:43+01:00",
+  "id": "flutter-remote-logging",
+  "duration": 14,
+  "title": "Building High-Quality Production Flutter App: A Complete Guide to Flutter Remote Logging with GCP Cloud Logging",
+  "summary": "Step-by-step guide to setting up a Flutter app with Google Cloud Logging for Remote Logging",
+  "source": "flutter-remote-logging.md",
+  "theme": "",
+  "status": [
+    "draft"
+  ],
+  "category": [
+    "flutter",
+    "dart",
+    "googlecloud",
+    "remotelogging"
+  ],
+  "tags": [
+    "web",
+    "workshop"
+  ],
+  "feedback": "https://github.com/isaacadariku/flutter-codelabs/issues",
+  "ga": "G-42QE2GLHVZ",
+  "url": "flutter-remote-logging"
+}
